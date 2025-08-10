@@ -3,8 +3,8 @@
 #include <coap-simple.h>
 //#define COAP_RESPONSE_CONTENT  69  // 2.05 Content in CoAP (example)
 //#define COAP_CONTENT_APPLICATION_OCTET_STREAM  42  // Example value
-const char* ssid     = "ssid";
-const char* password = "password";
+const char* ssid     = "CSE406";
+const char* password = "133456789";
 
 // CoAP client response callback
 void callback_response(CoapPacket &packet, IPAddress ip, int port);

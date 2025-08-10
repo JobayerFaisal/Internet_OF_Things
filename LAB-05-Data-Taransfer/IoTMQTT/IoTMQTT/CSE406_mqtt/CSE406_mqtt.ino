@@ -5,7 +5,7 @@
 #include <WiFi.h>
 #endif
 
-#include "DHTesp.h"
+#include "DHTesp.h" 
 #include <ArduinoJson.h>
 #include <PubSubClient.h>
 #include <WiFiClientSecure.h>
@@ -17,8 +17,8 @@ DHTesp dht;
 /**** LED Settings *******/
 const int led = 5;  //Set LED pin as GPIO5
 /****** WiFi Connection Details *******/
-const char* ssid = "your_wifi_ssid";
-const char* password = "your_wifi_password";
+const char* ssid = "CSE406";
+const char* password = "123456789";
 
 /******* MQTT Broker Connection Details *******/
 const char* mqtt_server = "08442a41f45245b48eac977ace298cf6.s1.eu.hivemq.cloud";
