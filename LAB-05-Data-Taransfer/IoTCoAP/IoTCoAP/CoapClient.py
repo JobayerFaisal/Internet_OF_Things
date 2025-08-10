@@ -8,7 +8,7 @@ async def main():
 
     # Define the CoAP URI for the "light" endpoint.
     # Replace "localhost" with the actual server IP if needed.
-    uri = "coap://192.168.137.221/light"
+    uri = "coap://192.168.0.101/light"
     #uri = "coap://127.0.0.1/light"
     # Prepare the payload: "1" to, for instance, turn on the light.
     payload = "0".encode('utf-8')
