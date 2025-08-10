@@ -23,9 +23,10 @@ Task taskSendMessage( TASK_SECOND * 1 , TASK_FOREVER, &sendMessage );
 void sendMessage() {
   String msg = "Hi from Jobayer";
   msg += mesh.getNodeId();
-  //mesh.sendBroadcast( msg );
-  mesh.sendSingle(1163312619, msg);
-  mesh.sendSingle(1163269966, msg);
+  //
+  mesh.sendBroadcast( msg );
+  //mesh.sendSingle(1163312619, msg);
+  //mesh.sendSingle(1163269966, msg);
   taskSendMessage.setInterval( random( TASK_SECOND * 1, TASK_SECOND * 5 ));
 }
 
