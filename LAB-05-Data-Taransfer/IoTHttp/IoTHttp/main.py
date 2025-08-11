@@ -10,10 +10,10 @@ app = Flask(__name__)
 @app.route('/rest', methods=['GET', 'POST'])
 def rest_endpoint():
     if request.method == 'GET':
-        return jsonify({"message": "GET request received"})
+        return jsonify({"message": "GET request received FROM JOBAYER FAISAL FAHIM"})
     else:
         data = request.json
-        return jsonify({"message": "POST request received", "data": data})
+        return jsonify({"message": "POST request received FROM JOBAYER FAISAL FAHIM", "data": data})
 
 
 
