@@ -47,7 +47,7 @@ void loop() {
     HTTPClient http;
 
     Serial.print("[HTTP] begin...\n");
-    if (http.begin(client, "http://192.168.0.104:5000/rest")) {  // HTTP
+    if (http.begin(client, "http://192.168.0.106:5000/rest")) {  // HTTP
 
 
       Serial.print("[HTTP] GET...\n");

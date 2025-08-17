@@ -11,7 +11,7 @@ async def main():
     uri = "coap://192.168.0.107:5683/light"
     #uri = "coap://127.0.0.1/light"
     # Prepare the payload: "1" to, for instance, turn on the light.
-    payload = "0".encode('utf-8')
+    payload = "1".encode('utf-8')
     
     # Create a PUT request message with the payload.
     request = aiocoap.Message(code=aiocoap.PUT, uri=uri, payload=payload)

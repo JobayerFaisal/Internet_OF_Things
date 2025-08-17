@@ -57,6 +57,7 @@ void callback_response(CoapPacket &packet, IPAddress ip, int port) {
   Serial.println(p);
 }
 
+
 void setup() {
   Serial.begin(115200);
   delay(100);
