@@ -214,8 +214,11 @@ if (uidMatch(mfrc522.uid.uidByte, mfrc522.uid.size) != "") {
 // RST → D4 (GPIO2)
 // 3.3V → 3V3 (⚠️ Only 3.3 V, never 5 V)
 // GND → G
-// 🔹 LED
+// 🔹 GREEN_LED
 // Anode (+, long leg) → D1 (GPIO5) via 220 Ω resistor
+// Cathode (–, short leg) → GND
+// 🔹 RED_LED
+// Anode (+, long leg) → D2 (GPIO7) via 220 Ω resistor
 // Cathode (–, short leg) → GND
 // 🔹 Buzzer
 // Positive (+) → D0 (GPIO16)
