@@ -3,8 +3,8 @@
 #include <DHT.h>
 
 // --- USER SETTINGS ---
-const char* WIFI_SSID = "Diba";
-const char* WIFI_PASSWORD = "89718971";
+const char* WIFI_SSID = "Jobayer";
+const char* WIFI_PASSWORD = "12345678";
 const char* MQTT_SERVER = "demo.thingsboard.io";  // Change to your server IP
 const uint16_t MQTT_PORT = 1883;
 const char* ACCESS_TOKEN = "exh1PPkTNLLEki8ARUCI"; // Use the device token

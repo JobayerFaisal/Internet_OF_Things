@@ -4,10 +4,13 @@
 #include <MFRC522.h>
 
 // --- WiFi ---
-const char* WIFI_SSID = "Diba";
-const char* WIFI_PASS = "89718971";
+const char* WIFI_SSID = "Jobayer";
+const char* WIFI_PASS = "12345678";
 
 // --- ThingsBoard ---
+// const char* TB_HOST   = "192.168.0.106";
+// const char* TB_TOKEN  = "abHynoUovzfgBIeXBld9";
+
 const char* TB_HOST   = "demo.thingsboard.io";  // or your TB server
 const int   TB_PORT   = 1883;
 const char* TB_TOKEN  = "GyOCC9fM2scU2fi2rqqM";   // from ThingsBoard device
@@ -18,31 +21,46 @@ PubSubClient mqtt(espClient);
 // --- RFID ---
 #define SS_PIN   D8
 #define RST_PIN  D4
-#define LED_PIN  D1
+#define GREEN_LED_PIN  D1
+#define RED_LED_PIN    D2
 #define BUZZER   D0
-#define DOOR_MS  3000
+#define DOOR_MS  2000
 
 MFRC522 mfrc522(SS_PIN, RST_PIN);
 
-// Allowed UIDs
-const byte ALLOWED[][4] = {
-  {0xDE, 0xAD, 0xBE, 0xEF},
-  {0x04, 0x3A, 0xB2, 0x19}
+struct User {
+  byte uid[4];
+  String username;
 };
-const size_t ALLOWED_COUNT = sizeof(ALLOWED) / sizeof(ALLOWED[0]);
+
+// Create an array of Users
+User allowedUsers[] = {
+  {{0xD9, 0x4A, 0xC8, 0x01}, "DINA"},
+  {{0xA5, 0x1E, 0x28, 0x02}, "DISHA"}
+};
+
+const size_t ALLOWED_COUNT = sizeof(allowedUsers) / sizeof(allowedUsers[0]);
+
 
 // --- Functions ---
-bool uidMatch(byte *uid, byte size) {
-  if (size != 4) return false;
+String uidMatch(byte *uid, byte size) {
+  if (size != 4) return "";  // If the UID size is incorrect, return empty string
+
   for (size_t i = 0; i < ALLOWED_COUNT; i++) {
-    bool ok = true;
+    bool match = true;
     for (byte j = 0; j < 4; j++) {
-      if (ALLOWED[i][j] != uid[j]) { ok = false; break; }
+      if (allowedUsers[i].uid[j] != uid[j]) {
+        match = false;
+        break;
+      }
     }
-    if (ok) return true;
+    if (match) {
+      return allowedUsers[i].username; // Return the username if UID matches
+    }
   }
-  return false;
+  return ""; // Return empty string if no match is found
 }
+
 
 void wifiConnect() {
   WiFi.begin(WIFI_SSID, WIFI_PASS);
@@ -68,34 +86,84 @@ void mqttConnect() {
   }
 }
 
-void sendEvent(String uid, String outcome) {
+void sendDoorCloseEvent(String uid, String username) {
   if (WiFi.status() != WL_CONNECTED) wifiConnect();
   if (!mqtt.connected()) mqttConnect();
 
   String payload = "{";
   payload += "\"uid\":\"" + uid + "\",";
-  payload += "\"outcome\":\"" + outcome + "\"";
+  payload += "\"username\":\"" + username + "\",";
+  payload += "\"door_status\":\"closed\",";
+  payload += "\"timestamp\":" + String(millis());
   payload += "}";
 
   mqtt.publish("v1/devices/me/telemetry", payload.c_str());
-  Serial.println("Sent to TB: " + payload);
+  Serial.println("Door closed event sent to TB: " + payload);
 }
 
-void buzzOK()   { tone(BUZZER, 2000, 80); delay(100); tone(BUZZER, 2500, 60); }
-void buzzFail() { tone(BUZZER, 400, 200); }
+void sendEvent(String uid, String outcome, String username) {
+  if (WiFi.status() != WL_CONNECTED) wifiConnect();
+  if (!mqtt.connected()) mqttConnect();
+
+  // Determine door status
+  String door_status = (outcome == "granted") ? "open" : "closed";
+
+  String payload = "{";
+  payload += "\"uid\":\"" + uid + "\",";
+  payload += "\"outcome\":\"" + outcome + "\",";
+  payload += "\"username\":\"" + username + "\",";
+  payload += "\"door_status\":\"" + door_status + "\",";
+  payload += "\"timestamp\":" + String(millis());
+  payload += "}";
+
+  // Publish as Timeseries data
+  mqtt.publish("v1/devices/me/telemetry", payload.c_str());
+  Serial.println("Sent to TB: " + payload);
+
+  // If access is granted, automatically close door after 10s
+  if (outcome == "granted") {
+    delay(10000);  // Wait 10 seconds
+    sendDoorCloseEvent(uid, username);
+  }
+}
+
+
+
+void buzzOK()   { 
+  tone(BUZZER, 2000, 80); 
+  delay(100); 
+  tone(BUZZER, 2500, 60); }
+
+void buzzFail() {
+  tone(BUZZER, 400, 200); // Play failure tone for 200ms
+  delay(200);              // Wait for 200ms
+  tone(BUZZER, 400, 200); // Play failure tone again for 200ms
+  delay(200);              // Wait for 200ms
+  tone(BUZZER, 400, 200); // Play failure tone again for 200ms
+  delay(200);              // Wait for 200ms
+  noTone(BUZZER);          // Stop the buzzer after 2 seconds
+}
+
+void indicateDenied() {
+  digitalWrite(RED_LED_PIN, HIGH); // Turn on the red LED
+  buzzFail(); // Play the failure tone
+  delay(DOOR_MS);
+  digitalWrite(RED_LED_PIN, LOW); // Turn off the red LED after the delay
+}
 
 void indicateUnlock() {
-  digitalWrite(LED_PIN, HIGH);
+  digitalWrite(GREEN_LED_PIN, HIGH);
   buzzOK();
   delay(DOOR_MS);
-  digitalWrite(LED_PIN, LOW);
+  digitalWrite(GREEN_LED_PIN, LOW);
 }
 
 void setup() {
   Serial.begin(115200);
-  pinMode(LED_PIN, OUTPUT);
+  pinMode(GREEN_LED_PIN, OUTPUT);
+  pinMode(RED_LED_PIN, OUTPUT);
   pinMode(BUZZER, OUTPUT);
-  digitalWrite(LED_PIN, LOW);
+  digitalWrite(GREEN_LED_PIN, LOW);
 
   wifiConnect();
   mqttConnect();
@@ -120,15 +188,16 @@ void loop() {
   }
   uidHex.toUpperCase();
 
-  if (uidMatch(mfrc522.uid.uidByte, mfrc522.uid.size)) {
-    Serial.println("Access GRANTED: " + uidHex);
-    indicateUnlock();
-    sendEvent(uidHex, "granted");
-  } else {
-    Serial.println("Access DENIED: " + uidHex);
-    buzzFail();
-    sendEvent(uidHex, "denied");
-  }
+if (uidMatch(mfrc522.uid.uidByte, mfrc522.uid.size) != "") {
+  String username = uidMatch(mfrc522.uid.uidByte, mfrc522.uid.size); // Fetch username
+  Serial.println("Access GRANTED: " + uidHex + " Username: " + username);
+  indicateUnlock();
+  sendEvent(uidHex, "granted", username); // Pass username to sendEvent
+} else {
+  Serial.println("Access DENIED: " + uidHex);
+  indicateDenied();
+  sendEvent(uidHex, "denied", ""); // No username for denied access
+}
 
   mfrc522.PICC_HaltA();
   mfrc522.PCD_StopCrypto1();
